@@ -1,6 +1,6 @@
 [project]
 name = "care-ai-note"
-version = "0.1.0"
+version = "0.1.1"
 description = "障害福祉・共同生活援助の現場向け記録アプリ"
 readme = "README_APK.md"
 requires-python = ">=3.10"
@@ -19,6 +19,7 @@ path = "."
 module = "main"
 
 [tool.flet.android]
+bundle_id = "com.careainote.fieldtest"
 min_sdk_version = 24
 target_sdk_version = 35
 adaptive_icon_background = "#F3F8F7"
