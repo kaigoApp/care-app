@@ -250,7 +250,7 @@ def _compose_time_value(hour_text: str, minute_text: str) -> str:
     return f"{int(hour)}:{int(minute):02d}"
 
 
-def _time_input_row(
+def _legacy_time_input_row(
     label: str,
     value: str,
     on_change: Callable[[str], None],
@@ -296,6 +296,65 @@ def _time_input_row(
         ],
         spacing=6,
     )
+
+
+def _mobile_safe_time_input_row(
+    label: str,
+    value: str,
+    on_change: Callable[[str], None],
+) -> ft.Control:
+    hour_value, minute_value = _split_time_value(value)
+
+    hour_field = ft.TextField(
+        label=f"{label} (時)",
+        value=hour_value,
+        width=124,
+        height=56,
+        text_align=ft.TextAlign.CENTER,
+        keyboard_type=ft.KeyboardType.NUMBER,
+        border_color=COLOR_GRAY_BORDER,
+        content_padding=ft.Padding.symmetric(horizontal=SPACE_SM, vertical=SPACE_SM),
+    )
+    minute_field = ft.TextField(
+        label="分",
+        value=minute_value,
+        width=124,
+        height=56,
+        text_align=ft.TextAlign.CENTER,
+        keyboard_type=ft.KeyboardType.NUMBER,
+        border_color=COLOR_GRAY_BORDER,
+        content_padding=ft.Padding.symmetric(horizontal=SPACE_SM, vertical=SPACE_SM),
+    )
+
+    def handle_time_change(_e: ft.ControlEvent) -> None:
+        composed = _compose_time_value(hour_field.value or "0", minute_field.value or "0")
+        normalized_hour, normalized_minute = _split_time_value(composed)
+        hour_field.value = normalized_hour
+        minute_field.value = normalized_minute
+        hour_field.update()
+        minute_field.update()
+        on_change(composed)
+
+    hour_field.on_blur = handle_time_change
+    minute_field.on_blur = handle_time_change
+    hour_field.on_submit = handle_time_change
+    minute_field.on_submit = handle_time_change
+
+    return ft.Column(
+        controls=[
+            ft.Row(
+                controls=[hour_field, minute_field],
+                spacing=SPACE_SM,
+                wrap=True,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            ),
+            ft.Text("時: 0〜23 / 分: 0〜55（5分刻み）", size=FONT_SIZE_XS, color=COLOR_GRAY_TEXT, weight=ft.FontWeight.W_700),
+        ],
+        spacing=6,
+    )
+
+
+_time_input_row = _mobile_safe_time_input_row
 
 
 def create_shared_header(
@@ -532,7 +591,6 @@ def create_vital_input_field(label: str, value: str, on_change: FloatChangeHandl
     step = _step_for_label(label)
     field = ft.TextField(
         value=str(value),
-        expand=True,
         height=52,
         text_size=FONT_SIZE_LG,
         text_align=ft.TextAlign.CENTER,
@@ -821,6 +879,85 @@ def create_support_progress_panel(
         content.append(ft.Row(controls=actions, alignment=ft.MainAxisAlignment.END, spacing=SPACE_SM, wrap=True))
     container = _build_input_panel_shell("支援経過入力", "区分を選択して支援内容を記録", ft.Icons.EDIT_NOTE, content)
     container.data = {"selected_category": selected_category, "note_field": note_field, "record_time": record_time, "is_editing": is_editing}
+    return container
+
+
+def create_support_progress_panel(
+    selected_category: str,
+    note_text: str,
+    categories: list[str],
+    record_time: str,
+    recorded_at_text: str,
+    staff_name: str,
+    on_category_select: Callable[[str], None],
+    on_text_change: Callable[[str], None],
+    on_record_time_change: Callable[[str], None],
+    on_save: Optional[Callable[[ft.ControlEvent], None]] = None,
+    is_editing: bool = False,
+    on_cancel: Optional[Callable[[ft.ControlEvent], None]] = None,
+) -> ft.Container:
+    active_category = selected_category or (categories[0] if categories else "")
+    category_buttons = ft.Row(
+        controls=[
+            _toggle_button(
+                label,
+                active_category == label,
+                lambda e, item=label: on_category_select(item),
+                compact=True,
+            )
+            for label in categories
+        ],
+        spacing=SPACE_SM,
+        wrap=True,
+    )
+
+    note_field = ft.TextField(
+        label="支援内容",
+        value=note_text,
+        multiline=True,
+        min_lines=6,
+        border_color=COLOR_GRAY_BORDER,
+        content_padding=ft.Padding.symmetric(horizontal=SPACE_SM, vertical=SPACE_SM),
+        hint_text="例: 食後の服薬確認、表情や発語、夜間の巡視内容などを記録",
+        on_change=lambda e: on_text_change(e.control.value or ""),
+    )
+    meta_row = ft.Row(
+        controls=[
+            _badge(active_category or "未選択", COLOR_TEAL_SOFT, COLOR_TEAL_DARK, ft.Icons.LABEL),
+            _badge(recorded_at_text, COLOR_BLUE_SOFT, COLOR_BLUE, ft.Icons.SCHEDULE),
+            _badge(staff_name or "担当者未設定", COLOR_SLATE_SOFT, COLOR_GRAY_TEXT, ft.Icons.PERSON),
+        ],
+        spacing=SPACE_SM,
+        wrap=True,
+    )
+    content: list[ft.Control] = []
+    if is_editing:
+        content.append(
+            ft.Container(
+                bgcolor="#EFF6FF",
+                border=ft.Border.all(1, "#BFDBFE"),
+                border_radius=12,
+                padding=ft.Padding.symmetric(horizontal=SPACE_MD, vertical=SPACE_SM),
+                content=ft.Text("記録を編集中です。内容を確認して更新してください。", size=FONT_SIZE_SM, color=COLOR_BLUE, weight=ft.FontWeight.W_700),
+            )
+        )
+    content.extend(
+        [
+            ft.Text("区分", size=FONT_SIZE_XS, color=COLOR_GRAY_TEXT, weight=ft.FontWeight.W_700),
+            category_buttons,
+            _mobile_safe_time_input_row("記録時刻", record_time, on_record_time_change),
+            meta_row,
+            note_field,
+        ]
+    )
+    if on_save is not None:
+        actions: list[ft.Control] = []
+        if is_editing and on_cancel is not None:
+            actions.append(ft.TextButton("キャンセル", on_click=on_cancel, style=ft.ButtonStyle(color=COLOR_GRAY_TEXT)))
+        actions.append(_panel_save_button("記録を更新" if is_editing else "記録を保存", on_save))
+        content.append(ft.Row(controls=actions, alignment=ft.MainAxisAlignment.END, spacing=SPACE_SM, wrap=True))
+    container = _build_input_panel_shell("支援経過入力", "区分を選択して支援内容を記録", ft.Icons.EDIT_NOTE, content)
+    container.data = {"selected_category": active_category, "note_field": note_field, "record_time": record_time, "is_editing": is_editing}
     return container
 
 
