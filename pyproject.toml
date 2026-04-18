@@ -1,0 +1,29 @@
+[project]
+name = "care-ai-note"
+version = "0.1.0"
+description = "障害福祉・共同生活援助の現場向け記録アプリ"
+readme = "README_APK.md"
+requires-python = ">=3.10"
+dependencies = [
+    "flet[all]>=0.28.0",
+    "openai>=1.30.0",
+]
+
+[tool.flet]
+product = "福祉記録アプリ"
+company = "Care AI Note"
+copyright = "Copyright (c) 2026 Care AI Note"
+
+[tool.flet.app]
+path = "."
+module = "main"
+
+[tool.flet.android]
+min_sdk_version = 24
+target_sdk_version = 35
+adaptive_icon_background = "#F3F8F7"
+split_per_abi = false
+
+[tool.flet.android.permission]
+"android.permission.INTERNET" = true
+

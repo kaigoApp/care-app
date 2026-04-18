@@ -1,0 +1,7 @@
+build/
+dist/
+__pycache__/
+*.pyc
+apk_build_log.txt
+care_records.db
+
