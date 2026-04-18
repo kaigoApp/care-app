@@ -37,7 +37,7 @@ if (-not (Test-Path $fletExe)) {
 }
 
 & $pythonExe -m pip install --upgrade pip
-& $pythonExe -m pip install "flet[all]" openai
+& $pythonExe -m pip install "flet>=0.84.0" openai
 
 if ($DisableAI) {
     $env:CARE_APP_DISABLE_AI = "1"

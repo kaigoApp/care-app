@@ -5,7 +5,7 @@ description = "障害福祉・共同生活援助の現場向け記録アプリ"
 readme = "README_APK.md"
 requires-python = ">=3.10"
 dependencies = [
-    "flet[all]>=0.28.0",
+    "flet>=0.84.0",
     "openai>=1.30.0",
 ]
 
@@ -26,4 +26,3 @@ split_per_abi = false
 
 [tool.flet.android.permission]
 "android.permission.INTERNET" = true
-
