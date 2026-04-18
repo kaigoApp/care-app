@@ -252,11 +252,15 @@ def main(page: ft.Page) -> None:
         )
 
     def build_centered_container(control: ft.Control, width: int = MAX_CONTENT_WIDTH) -> ft.Control:
+        target_width = width
+        viewport_width = getattr(page, "width", None)
+        if isinstance(viewport_width, (int, float)) and viewport_width > 0:
+            target_width = min(width, max(280, int(viewport_width) - 24))
         try:
-            control.width = width
+            control.width = target_width
         except Exception:
             pass
-        return ft.Row(controls=[control], alignment=ft.MainAxisAlignment.CENTER)
+        return ft.Row(controls=[control], alignment=ft.MainAxisAlignment.CENTER, wrap=True)
 
     def build_filled_button(label: str, on_click: Any, disabled: bool = False, icon: Optional[str] = None) -> ft.Control:
         return ft.ElevatedButton(

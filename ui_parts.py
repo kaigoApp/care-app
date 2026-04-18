@@ -258,7 +258,7 @@ def _time_input_row(
 
     hour_dropdown = ft.Dropdown(
         label=f"{label}（時）",
-        width=110,
+        expand=True,
         height=56,
         value=hour_value,
         border_color=COLOR_GRAY_BORDER,
@@ -267,7 +267,7 @@ def _time_input_row(
     )
     minute_dropdown = ft.Dropdown(
         label="分",
-        width=110,
+        expand=True,
         height=56,
         value=minute_value,
         border_color=COLOR_GRAY_BORDER,
@@ -848,7 +848,12 @@ def create_support_progress_record_card(record: dict, on_edit=None, on_delete=No
         padding=ft.Padding.all(SPACE_MD),
         content=ft.Column(
             controls=[
-                ft.Row(controls=[left, ft.Row(controls=actions, spacing=0)], spacing=SPACE_SM, vertical_alignment=ft.CrossAxisAlignment.CENTER),
+                ft.Row(
+                    controls=[left, ft.Row(controls=actions, spacing=0, wrap=True)],
+                    spacing=SPACE_SM,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                    wrap=True,
+                ),
                 ft.Text(content, size=FONT_SIZE_MD, color=COLOR_BLACK),
             ],
             spacing=SPACE_SM,
