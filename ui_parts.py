@@ -308,6 +308,7 @@ def _mobile_safe_time_input_row(
     hour_field = ft.TextField(
         label=f"{label} (時)",
         value=hour_value,
+        adaptive=True,
         width=124,
         height=56,
         filled=False,
@@ -320,6 +321,7 @@ def _mobile_safe_time_input_row(
     minute_field = ft.TextField(
         label="分",
         value=minute_value,
+        adaptive=True,
         width=124,
         height=56,
         filled=False,
@@ -595,6 +597,7 @@ def create_vital_input_field(label: str, value: str, on_change: FloatChangeHandl
     step = _step_for_label(label)
     field = ft.TextField(
         value=str(value),
+        adaptive=True,
         height=52,
         filled=False,
         bgcolor=COLOR_WHITE,
@@ -799,6 +802,7 @@ def create_patrol_input_panel(
     safety_field = ft.TextField(
         label="安全確認（室温・転倒リスクなど）",
         value="",
+        adaptive=True,
         multiline=True,
         min_lines=2,
         max_lines=4,
@@ -923,6 +927,7 @@ def create_support_progress_panel(
     note_field = ft.TextField(
         label="支援内容",
         value=note_text,
+        adaptive=True,
         multiline=True,
         min_lines=4,
         max_lines=8,
