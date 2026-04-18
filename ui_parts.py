@@ -163,6 +163,7 @@ def _build_input_panel_shell(title: str, subtitle: str, icon: str, content: list
                     ],
                     spacing=SPACE_SM,
                     vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                    wrap=True,
                 ),
                 *content,
             ],
@@ -571,10 +572,12 @@ def create_vital_input_field(label: str, value: str, on_change: FloatChangeHandl
         content=ft.Column(
             controls=[
                 ft.Text(label, size=FONT_SIZE_MD, weight=ft.FontWeight.W_700, color=COLOR_BLACK),
+                field,
                 ft.Row(
-                    controls=[minus_button, field, plus_button],
+                    controls=[minus_button, plus_button],
                     spacing=SPACE_SM,
-                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                    alignment=ft.MainAxisAlignment.END,
+                    wrap=True,
                 ),
             ],
             spacing=8,
@@ -635,6 +638,7 @@ def create_meal_panel(
     time_buttons = ft.Row(
         controls=[_toggle_button(label, selected_time == label, lambda e, item=label: on_time_select(item), expand=True, compact=True) for label in ["朝", "昼", "夕"]],
         spacing=SPACE_SM,
+        wrap=True,
     )
     intake_dropdown = ft.Dropdown(
         label="摂取量",
@@ -700,6 +704,7 @@ def create_bathing_input_panel(
             for label in ["未実施", "シャワー", "浴槽"]
         ],
         spacing=SPACE_SM,
+        wrap=True,
     )
     status_note = {"未実施": "本日は未実施で記録されます。", "シャワー": "シャワー浴として記録されます。", "浴槽": "浴槽入浴として記録されます。"}.get(selected_status, "入浴状態を選択してください。")
     content: list[ft.Control] = [
@@ -725,6 +730,7 @@ def create_patrol_input_panel(
     sleep_buttons = ft.Row(
         controls=[_toggle_button(label, selected_sleep == label, lambda e, item=label: on_sleep_select(item), expand=True, compact=True) for label in ["眠れている", "覚醒"]],
         spacing=SPACE_SM,
+        wrap=True,
     )
     safety_field = ft.TextField(
         label="安全確認（室温・転倒リスクなど）",
@@ -834,7 +840,6 @@ def create_support_progress_record_card(record: dict, on_edit=None, on_delete=No
         ],
         spacing=SPACE_SM,
         wrap=True,
-        expand=True,
     )
     actions: list[ft.Control] = []
     if on_edit is not None:
@@ -848,12 +853,8 @@ def create_support_progress_record_card(record: dict, on_edit=None, on_delete=No
         padding=ft.Padding.all(SPACE_MD),
         content=ft.Column(
             controls=[
-                ft.Row(
-                    controls=[left, ft.Row(controls=actions, spacing=0, wrap=True)],
-                    spacing=SPACE_SM,
-                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                    wrap=True,
-                ),
+                left,
+                ft.Row(controls=actions, spacing=0, wrap=True, alignment=ft.MainAxisAlignment.END) if actions else ft.Container(),
                 ft.Text(content, size=FONT_SIZE_MD, color=COLOR_BLACK),
             ],
             spacing=SPACE_SM,
@@ -936,7 +937,6 @@ def _build_daily_status_chip(timing: str, item: dict, kind: str) -> ft.Container
         bgcolor=bgcolor,
         border_radius=999,
         padding=ft.Padding.symmetric(horizontal=SPACE_SM, vertical=6),
-        expand=True,
     )
 
 
