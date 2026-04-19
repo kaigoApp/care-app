@@ -41,6 +41,10 @@ from ui_parts import (
     create_vital_panel,
 )
 from mobile_ui_parts import (
+    create_bathing_input_panel,
+    create_meal_panel,
+    create_medication_panel,
+    create_patrol_input_panel,
     create_support_progress_panel,
     create_vital_input_field,
     create_vital_panel,
@@ -160,79 +164,20 @@ def main(page: ft.Page) -> None:
         page.update()
 
     def show_message(message: str, bgcolor: str = APP_TIFFANY_DEEP) -> None:
-        nonlocal message_overlay
-        if message_overlay and message_overlay in page.overlay:
-            page.overlay.remove(message_overlay)
-
-        message_overlay = ft.Container(
-            content=ft.Container(
-                content=ft.Row(
-                    controls=[
-                        ft.Container(
-                            width=34,
-                            height=34,
-                            border_radius=17,
-                            bgcolor="#FFFFFF33",
-                            alignment=ft.Alignment(0, 0),
-                            content=ft.Icon(ft.Icons.CHECK_CIRCLE, color=COLOR_WHITE, size=18),
-                        ),
-                        ft.Column(
-                            controls=[
-                                ft.Text("保存しました", color=COLOR_WHITE, weight=ft.FontWeight.W_800, size=FONT_SIZE_SM),
-                                ft.Text(message, color=COLOR_WHITE, size=FONT_SIZE_SM),
-                            ],
-                            spacing=2,
-                            tight=True,
-                        ),
-                    ],
-                    spacing=12,
-                    tight=True,
-                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                ),
-                bgcolor=bgcolor,
-                border_radius=18,
-                padding=ft.Padding.symmetric(horizontal=18, vertical=14),
-                shadow=ft.BoxShadow(
-                    spread_radius=0,
-                    blur_radius=18,
-                    color="#0F172A33",
-                    offset=ft.Offset(0, 8),
-                ),
+        page.snack_bar = ft.SnackBar(
+            content=ft.Row(
+                controls=[
+                    ft.Icon(ft.Icons.CHECK_CIRCLE, color=COLOR_WHITE, size=18),
+                    ft.Text(message, color=COLOR_WHITE, weight=ft.FontWeight.W_700),
+                ],
+                spacing=10,
+                tight=True,
             ),
-            alignment=ft.Alignment(0, -1),
-            margin=ft.Margin.only(top=20),
-            animate_offset=ft.Animation(220, "easeOut"),
-            animate_opacity=ft.Animation(220, "easeOut"),
-            offset=ft.Offset(0, -0.2),
-            opacity=0,
+            bgcolor=bgcolor,
+            duration=1800,
         )
-        page.overlay.append(message_overlay)
+        page.snack_bar.open = True
         page.update()
-
-        message_overlay.offset = ft.Offset(0, 0)
-        message_overlay.opacity = 1
-        page.update()
-
-        def remove_overlay() -> None:
-            nonlocal message_overlay
-            current = message_overlay
-            if not current:
-                return
-            current.opacity = 0
-            current.offset = ft.Offset(0, -0.2)
-            page.update()
-
-            def cleanup() -> None:
-                nonlocal message_overlay
-                if current in page.overlay:
-                    page.overlay.remove(current)
-                if message_overlay is current:
-                    message_overlay = None
-                page.update()
-
-            threading.Timer(0.25, cleanup).start()
-
-        threading.Timer(2.4, remove_overlay).start()
 
     def build_banner(message: str, kind: str = "info") -> ft.Control:
         styles = {
@@ -1417,17 +1362,47 @@ def main(page: ft.Page) -> None:
         )
         return build_screen_shell(create_shared_header(title="マスター管理", subtitle="職員マスタ・利用者マスタを管理します。", staff_text=current_staff_text(), back_label="ダッシュボードへ戻る", on_back=go_to_dashboard), [tab_switcher, current_panel])
 
+    def go_back_by_swipe() -> None:
+        if state.screen == "support_progress":
+            go_to_resident_input()
+        elif state.screen == "resident_input":
+            go_to_dashboard()
+        elif state.screen == "master_admin":
+            go_to_dashboard()
+        elif state.screen == "dashboard":
+            go_to_staff_select()
+
+    def with_swipe_back(content: ft.Control) -> ft.Control:
+        swipe = {"dx": 0.0}
+
+        def on_swipe_update(e: ft.DragUpdateEvent) -> None:
+            swipe["dx"] += float(e.primary_delta or 0)
+
+        def on_swipe_end(e: ft.DragEndEvent) -> None:
+            should_go_back = swipe["dx"] < -90 or float(e.primary_velocity or 0) < -450
+            swipe["dx"] = 0.0
+            if should_go_back:
+                go_back_by_swipe()
+
+        return ft.GestureDetector(
+            content=content,
+            drag_interval=40,
+            on_horizontal_drag_update=on_swipe_update,
+            on_horizontal_drag_end=on_swipe_end,
+        )
+
     def render_screen() -> None:
         if state.screen == "staff_select":
-            root.content = build_staff_select_screen()
+            screen = build_staff_select_screen()
         elif state.screen == "dashboard":
-            root.content = build_dashboard_screen()
+            screen = build_dashboard_screen()
         elif state.screen == "master_admin":
-            root.content = build_master_admin_screen()
+            screen = build_master_admin_screen()
         elif state.screen == "support_progress":
-            root.content = build_support_progress_screen()
+            screen = build_support_progress_screen()
         else:
-            root.content = build_resident_input_screen()
+            screen = build_resident_input_screen()
+        root.content = with_swipe_back(screen)
         page.update()
 
     refresh_master_data()

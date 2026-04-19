@@ -127,6 +127,14 @@ def _mobile_save_button(label: str, on_click: Optional[Callable[[ft.ControlEvent
     )
 
 
+def _mobile_switch(
+    label: str,
+    selected: bool,
+    on_click: Callable[[ft.ControlEvent], None],
+) -> ft.Container:
+    return _mobile_chip_button(label, selected, on_click, min_width=110)
+
+
 def _mobile_safe_time_input_row(label: str, value: str, on_change: Callable[[str], None]) -> ft.Control:
     current_value = _compose_time_value(*_split_time_value(value))
     time_text = ft.Text(current_value, size=FONT_SIZE_LG, weight=ft.FontWeight.W_900, color=COLOR_TEAL_DARK)
@@ -229,6 +237,164 @@ def create_vital_panel(
     return container
 
 
+def create_meal_panel(
+    selected_time: str,
+    intake_value: int,
+    is_self_cooking: bool,
+    record_time: str,
+    on_time_select: Callable[[str], None],
+    on_intake_select: Callable[[int], None],
+    on_self_cooking_change: Callable[[bool], None],
+    on_record_time_change: Callable[[str], None],
+    on_save: Optional[Callable[[ft.ControlEvent], None]] = None,
+) -> ft.Container:
+    intake_text = ft.Text(f"{intake_value}/10", size=FONT_SIZE_XL, weight=ft.FontWeight.W_900, color=COLOR_BLACK)
+
+    def change_intake(delta: int) -> None:
+        new_value = max(0, min(10, int(intake_text.value.split("/", 1)[0]) + delta))
+        intake_text.value = f"{new_value}/10"
+        on_intake_select(new_value)
+        intake_text.update()
+
+    content: list[ft.Control] = [
+        _mobile_safe_time_input_row("\u8a18\u9332\u6642\u523b", record_time, on_record_time_change),
+        ft.Text("\u6642\u9593\u5e2f", size=FONT_SIZE_XS, color=COLOR_GRAY_TEXT, weight=ft.FontWeight.W_700),
+        ft.Row(
+            controls=[
+                _mobile_switch("\u671d", selected_time == "\u671d", lambda e: on_time_select("\u671d")),
+                _mobile_switch("\u663c", selected_time == "\u663c", lambda e: on_time_select("\u663c")),
+                _mobile_switch("\u5915", selected_time == "\u5915", lambda e: on_time_select("\u5915")),
+            ],
+            spacing=SPACE_SM,
+            wrap=True,
+        ),
+        ft.Text("\u6442\u53d6\u91cf", size=FONT_SIZE_XS, color=COLOR_GRAY_TEXT, weight=ft.FontWeight.W_700),
+        _white_value_box(intake_text),
+        ft.Row(
+            controls=[
+                _mobile_chip_button("-1", False, lambda e: change_intake(-1), min_width=74),
+                _mobile_chip_button("+1", True, lambda e: change_intake(1), min_width=74),
+            ],
+            spacing=SPACE_SM,
+            wrap=True,
+        ),
+        _mobile_chip_button("\u81ea\u708a\u3042\u308a" if is_self_cooking else "\u81ea\u708a\u306a\u3057", is_self_cooking, lambda e: on_self_cooking_change(not is_self_cooking), min_width=130),
+    ]
+    if on_save is not None:
+        content.append(ft.Row(controls=[_mobile_save_button("\u98df\u4e8b\u3092\u4fdd\u5b58", on_save)], alignment=ft.MainAxisAlignment.END))
+    container = _mobile_panel_shell("\u98df\u4e8b\u5165\u529b", "\u6642\u9593\u5e2f\u3068\u6442\u53d6\u91cf\u3092\u8a18\u9332", ft.Icons.RESTAURANT, content)
+    container.data = {"record_time": record_time}
+    return container
+
+
+def create_medication_panel(
+    selected_timing: str,
+    is_completed: bool,
+    record_time: str,
+    on_timing_select: Callable[[str], None],
+    on_completed_change: Callable[[bool], None],
+    on_record_time_change: Callable[[str], None],
+    on_save: Optional[Callable[[ft.ControlEvent], None]] = None,
+) -> ft.Container:
+    content: list[ft.Control] = [
+        _mobile_safe_time_input_row("\u8a18\u9332\u6642\u523b", record_time, on_record_time_change),
+        ft.Text("\u670d\u85ac\u30bf\u30a4\u30df\u30f3\u30b0", size=FONT_SIZE_XS, color=COLOR_GRAY_TEXT, weight=ft.FontWeight.W_700),
+        ft.Row(
+            controls=[
+                _mobile_switch("\u98df\u524d", selected_timing == "\u98df\u524d", lambda e: on_timing_select("\u98df\u524d")),
+                _mobile_switch("\u98df\u5f8c", selected_timing == "\u98df\u5f8c", lambda e: on_timing_select("\u98df\u5f8c")),
+                _mobile_switch("\u5c31\u5bdd\u524d", selected_timing == "\u5c31\u5bdd\u524d", lambda e: on_timing_select("\u5c31\u5bdd\u524d")),
+            ],
+            spacing=SPACE_SM,
+            wrap=True,
+        ),
+        ft.Text("\u72b6\u614b", size=FONT_SIZE_XS, color=COLOR_GRAY_TEXT, weight=ft.FontWeight.W_700),
+        ft.Row(
+            controls=[
+                _mobile_switch("\u5b8c\u4e86", is_completed, lambda e: on_completed_change(True)),
+                _mobile_switch("\u672a", not is_completed, lambda e: on_completed_change(False)),
+            ],
+            spacing=SPACE_SM,
+            wrap=True,
+        ),
+    ]
+    if on_save is not None:
+        content.append(ft.Row(controls=[_mobile_save_button("\u670d\u85ac\u3092\u4fdd\u5b58", on_save)], alignment=ft.MainAxisAlignment.END))
+    container = _mobile_panel_shell("\u670d\u85ac\u5165\u529b", "\u670d\u85ac\u72b6\u6cc1\u3092\u8a18\u9332", ft.Icons.MEDICATION, content)
+    container.data = {"record_time": record_time}
+    return container
+
+
+def create_bathing_input_panel(
+    selected_status: str,
+    record_time: str,
+    on_status_select: Callable[[str], None],
+    on_record_time_change: Callable[[str], None],
+    on_save: Optional[Callable[[ft.ControlEvent], None]] = None,
+) -> ft.Container:
+    statuses = ["\u6d74\u69fd", "\u30b7\u30e3\u30ef\u30fc", "\u6e05\u62ed", "\u672a\u5b9f\u65bd"]
+    content: list[ft.Control] = [
+        _mobile_safe_time_input_row("\u8a18\u9332\u6642\u523b", record_time, on_record_time_change),
+        ft.Text("\u5165\u6d74\u72b6\u6cc1", size=FONT_SIZE_XS, color=COLOR_GRAY_TEXT, weight=ft.FontWeight.W_700),
+        ft.Row(
+            controls=[_mobile_switch(status, selected_status == status, lambda e, item=status: on_status_select(item)) for status in statuses],
+            spacing=SPACE_SM,
+            wrap=True,
+        ),
+    ]
+    if on_save is not None:
+        content.append(ft.Row(controls=[_mobile_save_button("\u5165\u6d74\u3092\u4fdd\u5b58", on_save)], alignment=ft.MainAxisAlignment.END))
+    container = _mobile_panel_shell("\u5165\u6d74\u5165\u529b", "\u5165\u6d74\u30fb\u6e05\u62ed\u306e\u5b9f\u65bd\u72b6\u6cc1\u3092\u8a18\u9332", ft.Icons.BATHTUB, content)
+    container.data = {"record_time": record_time}
+    return container
+
+
+def create_patrol_input_panel(
+    selected_time: str,
+    selected_sleep: str,
+    on_time_select: Callable[[str], None],
+    on_sleep_select: Callable[[str], None],
+    on_safety_change: Callable[[str], None],
+    on_save: Optional[Callable[[ft.ControlEvent], None]] = None,
+) -> ft.Container:
+    safety_text = ft.Text("\u5b89\u5168\u78ba\u8a8d: \u8a18\u8f09\u306a\u3057", size=FONT_SIZE_MD, color=COLOR_BLACK)
+
+    def set_safety(value: str) -> None:
+        label = value or "\u8a18\u8f09\u306a\u3057"
+        safety_text.value = f"\u5b89\u5168\u78ba\u8a8d: {label}"
+        on_safety_change(value)
+        safety_text.update()
+
+    content: list[ft.Control] = [
+        _mobile_safe_time_input_row("\u5de1\u8996\u6642\u523b", selected_time, on_time_select),
+        ft.Text("\u7761\u7720\u72b6\u6cc1", size=FONT_SIZE_XS, color=COLOR_GRAY_TEXT, weight=ft.FontWeight.W_700),
+        ft.Row(
+            controls=[
+                _mobile_switch("\u7720\u308c\u3066\u3044\u308b", selected_sleep == "\u7720\u308c\u3066\u3044\u308b", lambda e: on_sleep_select("\u7720\u308c\u3066\u3044\u308b")),
+                _mobile_switch("\u899a\u9192", selected_sleep == "\u899a\u9192", lambda e: on_sleep_select("\u899a\u9192")),
+            ],
+            spacing=SPACE_SM,
+            wrap=True,
+        ),
+        ft.Text("\u5b89\u5168\u78ba\u8a8d", size=FONT_SIZE_XS, color=COLOR_GRAY_TEXT, weight=ft.FontWeight.W_700),
+        _white_value_box(safety_text),
+        ft.Row(
+            controls=[
+                _mobile_chip_button("\u8a18\u8f09\u306a\u3057", True, lambda e: set_safety(""), min_width=110),
+                _mobile_chip_button("\u7570\u5e38\u306a\u3057", False, lambda e: set_safety("\u7570\u5e38\u306a\u3057"), min_width=110),
+                _mobile_chip_button("\u898b\u5b88\u308a\u7d99\u7d9a", False, lambda e: set_safety("\u898b\u5b88\u308a\u7d99\u7d9a"), min_width=130),
+            ],
+            spacing=SPACE_SM,
+            wrap=True,
+        ),
+    ]
+    if on_save is not None:
+        content.append(ft.Row(controls=[_mobile_save_button("\u5de1\u8996\u3092\u4fdd\u5b58", on_save)], alignment=ft.MainAxisAlignment.END))
+    container = _mobile_panel_shell("\u591c\u9593\u5de1\u8996\u5165\u529b", "\u5de1\u8996\u6642\u523b\u3068\u7761\u7720\u72b6\u6cc1\u3092\u8a18\u9332", ft.Icons.NIGHTLIGHT, content)
+    container.data = {"safety_field": type("SafetyProxy", (), {"value": ""})()}
+    return container
+
+
 def create_support_progress_panel(
     selected_category: str,
     note_text: str,
@@ -254,10 +420,12 @@ def create_support_progress_panel(
     selected_note = note_text or quick_notes[0]
     note_preview = ft.Text(selected_note, size=FONT_SIZE_MD, color=COLOR_BLACK)
 
-    def choose_note(text: str) -> None:
+    def choose_note(text: str, event: Optional[ft.ControlEvent] = None) -> None:
         note_preview.value = text
         on_text_change(text)
         note_preview.update()
+        if event is not None and getattr(event, "page", None) is not None:
+            event.page.update()
 
     def save_selected_note(e: ft.ControlEvent) -> None:
         on_text_change(note_preview.value or quick_notes[0])
@@ -273,7 +441,7 @@ def create_support_progress_panel(
         wrap=True,
     )
     note_buttons = ft.Column(
-        controls=[_mobile_chip_button(text, selected_note == text, lambda e, item=text: choose_note(item), min_width=220) for text in quick_notes],
+        controls=[_mobile_chip_button(text, selected_note == text, lambda e, item=text: choose_note(item, e), min_width=220) for text in quick_notes],
         spacing=SPACE_SM,
         tight=True,
     )
