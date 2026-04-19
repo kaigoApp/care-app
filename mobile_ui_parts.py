@@ -26,10 +26,8 @@ from ui_parts import (
     _compose_time_value,
     _format_numeric,
     _normalize_display_text,
-    _panel_save_button,
     _split_time_value,
     _step_for_label,
-    _toggle_button,
 )
 
 FloatChangeHandler = Callable[[str], None]
@@ -84,6 +82,51 @@ def _white_value_box(content: ft.Control) -> ft.Container:
     )
 
 
+def _mobile_chip_button(
+    label: str,
+    selected: bool,
+    on_click: Callable[[ft.ControlEvent], None],
+    min_width: int = 72,
+) -> ft.Container:
+    return ft.Container(
+        content=ft.Text(
+            label,
+            size=FONT_SIZE_SM,
+            weight=ft.FontWeight.W_800,
+            color=COLOR_WHITE if selected else COLOR_TEAL_DARK,
+            text_align=ft.TextAlign.CENTER,
+        ),
+        bgcolor=COLOR_TEAL_DARK if selected else COLOR_WHITE,
+        border=ft.Border.all(1, COLOR_TEAL_DARK),
+        border_radius=14,
+        padding=ft.Padding.symmetric(horizontal=SPACE_MD, vertical=SPACE_SM),
+        alignment=ft.Alignment(0, 0),
+        ink=False,
+        on_click=on_click,
+        width=min_width,
+    )
+
+
+def _mobile_save_button(label: str, on_click: Optional[Callable[[ft.ControlEvent], None]]) -> ft.Container:
+    return ft.Container(
+        content=ft.Row(
+            controls=[
+                ft.Icon(ft.Icons.SAVE_OUTLINED, size=16, color=COLOR_WHITE),
+                ft.Text(label, size=FONT_SIZE_SM, weight=ft.FontWeight.W_800, color=COLOR_WHITE),
+            ],
+            spacing=6,
+            tight=True,
+            alignment=ft.MainAxisAlignment.CENTER,
+        ),
+        bgcolor=COLOR_TEAL_DARK,
+        border_radius=14,
+        padding=ft.Padding.symmetric(horizontal=SPACE_MD, vertical=SPACE_SM),
+        alignment=ft.Alignment(0, 0),
+        ink=False,
+        on_click=on_click,
+    )
+
+
 def _mobile_safe_time_input_row(label: str, value: str, on_change: Callable[[str], None]) -> ft.Control:
     current_value = _compose_time_value(*_split_time_value(value))
     time_text = ft.Text(current_value, size=FONT_SIZE_LG, weight=ft.FontWeight.W_900, color=COLOR_TEAL_DARK)
@@ -103,10 +146,10 @@ def _mobile_safe_time_input_row(label: str, value: str, on_change: Callable[[str
             _white_value_box(time_text),
             ft.Row(
                 controls=[
-                    _toggle_button("-1\u6642\u9593", False, lambda e: adjust_minutes(-60), compact=True),
-                    _toggle_button("-5\u5206", False, lambda e: adjust_minutes(-5), compact=True),
-                    _toggle_button("+5\u5206", True, lambda e: adjust_minutes(5), compact=True),
-                    _toggle_button("+1\u6642\u9593", False, lambda e: adjust_minutes(60), compact=True),
+                    _mobile_chip_button("-1\u6642\u9593", False, lambda e: adjust_minutes(-60), min_width=70),
+                    _mobile_chip_button("-5\u5206", False, lambda e: adjust_minutes(-5), min_width=62),
+                    _mobile_chip_button("+5\u5206", True, lambda e: adjust_minutes(5), min_width=62),
+                    _mobile_chip_button("+1\u6642\u9593", False, lambda e: adjust_minutes(60), min_width=70),
                 ],
                 spacing=SPACE_SM,
                 wrap=True,
@@ -140,8 +183,8 @@ def create_vital_input_field(label: str, value: str, on_change: FloatChangeHandl
                 _white_value_box(value_text),
                 ft.Row(
                     controls=[
-                        _toggle_button("-1" if step == 1.0 else "-0.1", False, lambda e: adjust(-step), compact=True),
-                        _toggle_button("+1" if step == 1.0 else "+0.1", True, lambda e: adjust(step), compact=True),
+                        _mobile_chip_button("-1" if step == 1.0 else "-0.1", False, lambda e: adjust(-step), min_width=74),
+                        _mobile_chip_button("+1" if step == 1.0 else "+0.1", True, lambda e: adjust(step), min_width=74),
                     ],
                     spacing=SPACE_SM,
                     wrap=True,
@@ -174,7 +217,7 @@ def create_vital_panel(
         spo2_control,
     ]
     if on_save is not None:
-        content.append(ft.Row(controls=[_panel_save_button("\u30d0\u30a4\u30bf\u30eb\u3092\u4fdd\u5b58", on_save)], alignment=ft.MainAxisAlignment.END))
+        content.append(ft.Row(controls=[_mobile_save_button("\u30d0\u30a4\u30bf\u30eb\u3092\u4fdd\u5b58", on_save)], alignment=ft.MainAxisAlignment.END))
 
     container = _mobile_panel_shell(
         "\u30d0\u30a4\u30bf\u30eb\u5165\u529b",
@@ -223,14 +266,14 @@ def create_support_progress_panel(
 
     category_buttons = ft.Row(
         controls=[
-            _toggle_button(label, active_category == label, lambda e, item=label: on_category_select(item), compact=True)
+            _mobile_chip_button(label, active_category == label, lambda e, item=label: on_category_select(item), min_width=72)
             for label in categories
         ],
         spacing=SPACE_SM,
         wrap=True,
     )
     note_buttons = ft.Column(
-        controls=[_toggle_button(text, selected_note == text, lambda e, item=text: choose_note(item), compact=True) for text in quick_notes],
+        controls=[_mobile_chip_button(text, selected_note == text, lambda e, item=text: choose_note(item), min_width=220) for text in quick_notes],
         spacing=SPACE_SM,
         tight=True,
     )
@@ -272,8 +315,8 @@ def create_support_progress_panel(
     if on_save is not None:
         actions: list[ft.Control] = []
         if is_editing and on_cancel is not None:
-            actions.append(ft.TextButton("\u30ad\u30e3\u30f3\u30bb\u30eb", on_click=on_cancel, style=ft.ButtonStyle(color=COLOR_GRAY_TEXT)))
-        actions.append(_panel_save_button("\u8a18\u9332\u3092\u66f4\u65b0" if is_editing else "\u8a18\u9332\u3092\u4fdd\u5b58", save_selected_note))
+            actions.append(_mobile_chip_button("\u30ad\u30e3\u30f3\u30bb\u30eb", False, on_cancel, min_width=96))
+        actions.append(_mobile_save_button("\u8a18\u9332\u3092\u66f4\u65b0" if is_editing else "\u8a18\u9332\u3092\u4fdd\u5b58", save_selected_note))
         content.append(ft.Row(controls=actions, alignment=ft.MainAxisAlignment.END, spacing=SPACE_SM, wrap=True))
 
     container = _mobile_panel_shell(
