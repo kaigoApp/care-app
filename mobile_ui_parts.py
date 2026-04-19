@@ -8,12 +8,10 @@ from ui_parts import (
     COLOR_BLACK,
     COLOR_BLUE,
     COLOR_BLUE_SOFT,
-    COLOR_GRAY_BG,
     COLOR_GRAY_BORDER,
     COLOR_GRAY_TEXT,
     COLOR_SLATE_SOFT,
     COLOR_TEAL_DARK,
-    COLOR_TEAL_LIGHT,
     COLOR_TEAL_SOFT,
     COLOR_WHITE,
     FONT_SIZE_LG,
@@ -25,7 +23,6 @@ from ui_parts import (
     SPACE_MD,
     SPACE_SM,
     _badge,
-    _build_input_panel_shell,
     _compose_time_value,
     _format_numeric,
     _normalize_display_text,
@@ -38,10 +35,48 @@ from ui_parts import (
 FloatChangeHandler = Callable[[str], None]
 
 
-def _display_box(content: ft.Control, bg: str = COLOR_GRAY_BG) -> ft.Container:
+def _mobile_panel_shell(title: str, subtitle: str, icon: str, content: list[ft.Control]) -> ft.Container:
+    return ft.Container(
+        bgcolor=COLOR_WHITE,
+        border=ft.Border.all(1, COLOR_GRAY_BORDER),
+        border_radius=RADIUS_MD,
+        padding=ft.Padding.all(SPACE_MD),
+        content=ft.Column(
+            controls=[
+                ft.Row(
+                    controls=[
+                        ft.Container(
+                            width=42,
+                            height=42,
+                            border_radius=21,
+                            bgcolor=COLOR_TEAL_SOFT,
+                            alignment=ft.Alignment(0, 0),
+                            content=ft.Icon(icon, size=18, color=COLOR_TEAL_DARK),
+                        ),
+                        ft.Column(
+                            controls=[
+                                ft.Text(title, size=FONT_SIZE_LG, weight=ft.FontWeight.W_900, color=COLOR_BLACK),
+                                ft.Text(subtitle, size=FONT_SIZE_SM, color=COLOR_GRAY_TEXT),
+                            ],
+                            spacing=4,
+                            tight=True,
+                        ),
+                    ],
+                    spacing=SPACE_SM,
+                    wrap=True,
+                ),
+                *content,
+            ],
+            spacing=SPACE_MD,
+            tight=True,
+        ),
+    )
+
+
+def _white_value_box(content: ft.Control) -> ft.Container:
     return ft.Container(
         content=content,
-        bgcolor=bg,
+        bgcolor=COLOR_WHITE,
         border=ft.Border.all(1, COLOR_GRAY_BORDER),
         border_radius=14,
         padding=ft.Padding.symmetric(horizontal=SPACE_MD, vertical=SPACE_SM),
@@ -65,19 +100,20 @@ def _mobile_safe_time_input_row(label: str, value: str, on_change: Callable[[str
     return ft.Column(
         controls=[
             ft.Text(_normalize_display_text(label), size=FONT_SIZE_XS, color=COLOR_GRAY_TEXT, weight=ft.FontWeight.W_700),
-            _display_box(time_text, COLOR_TEAL_SOFT),
+            _white_value_box(time_text),
             ft.Row(
                 controls=[
-                    _toggle_button("-1時間", False, lambda e: adjust_minutes(-60), compact=True),
-                    _toggle_button("-5分", False, lambda e: adjust_minutes(-5), compact=True),
-                    _toggle_button("+5分", True, lambda e: adjust_minutes(5), compact=True),
-                    _toggle_button("+1時間", False, lambda e: adjust_minutes(60), compact=True),
+                    _toggle_button("-1\u6642\u9593", False, lambda e: adjust_minutes(-60), compact=True),
+                    _toggle_button("-5\u5206", False, lambda e: adjust_minutes(-5), compact=True),
+                    _toggle_button("+5\u5206", True, lambda e: adjust_minutes(5), compact=True),
+                    _toggle_button("+1\u6642\u9593", False, lambda e: adjust_minutes(60), compact=True),
                 ],
                 spacing=SPACE_SM,
                 wrap=True,
             ),
         ],
         spacing=6,
+        tight=True,
     )
 
 
@@ -101,7 +137,7 @@ def create_vital_input_field(label: str, value: str, on_change: FloatChangeHandl
         content=ft.Column(
             controls=[
                 ft.Text(display_label, size=FONT_SIZE_MD, weight=ft.FontWeight.W_700, color=COLOR_BLACK),
-                _display_box(value_text),
+                _white_value_box(value_text),
                 ft.Row(
                     controls=[
                         _toggle_button("-1" if step == 1.0 else "-0.1", False, lambda e: adjust(-step), compact=True),
@@ -112,10 +148,11 @@ def create_vital_input_field(label: str, value: str, on_change: FloatChangeHandl
                 ),
             ],
             spacing=8,
+            tight=True,
         ),
         bgcolor=COLOR_WHITE,
         border=ft.Border.all(1, COLOR_GRAY_BORDER),
-        border_radius=RADIUS_MD,
+        border_radius=14,
         padding=ft.Padding.all(SPACE_MD),
     )
 
@@ -130,15 +167,21 @@ def create_vital_panel(
     on_save: Optional[Callable[[ft.ControlEvent], None]] = None,
 ) -> ft.Container:
     content: list[ft.Control] = [
-        _mobile_safe_time_input_row("測定時刻", record_time, on_record_time_change),
+        _mobile_safe_time_input_row("\u6e2c\u5b9a\u6642\u523b", record_time, on_record_time_change),
         temperature_control,
         systolic_control,
         diastolic_control,
         spo2_control,
     ]
     if on_save is not None:
-        content.append(ft.Row(controls=[_panel_save_button("バイタルを保存", on_save)], alignment=ft.MainAxisAlignment.END))
-    container = _build_input_panel_shell("バイタル入力", "体温・血圧・SpO2をボタンで調整して記録", ft.Icons.MONITOR_HEART, content)
+        content.append(ft.Row(controls=[_panel_save_button("\u30d0\u30a4\u30bf\u30eb\u3092\u4fdd\u5b58", on_save)], alignment=ft.MainAxisAlignment.END))
+
+    container = _mobile_panel_shell(
+        "\u30d0\u30a4\u30bf\u30eb\u5165\u529b",
+        "\u4f53\u6e29\u30fb\u8840\u5727\u30fbSpO2\u3092\u30dc\u30bf\u30f3\u3067\u8abf\u6574\u3057\u3066\u8a18\u9332",
+        ft.Icons.MONITOR_HEART,
+        content,
+    )
     container.data = {"record_time": record_time}
     return container
 
@@ -159,11 +202,11 @@ def create_support_progress_panel(
 ) -> ft.Container:
     active_category = selected_category or (categories[0] if categories else "")
     quick_notes = [
-        "特変なく過ごされています。",
-        "穏やかに過ごされています。",
-        "声かけに応じられています。",
-        "表情や発語に大きな変化はありません。",
-        "見守りを継続しています。",
+        "\u7279\u5909\u306a\u304f\u904e\u3054\u3055\u308c\u3066\u3044\u307e\u3059\u3002",
+        "\u7a4f\u3084\u304b\u306b\u904e\u3054\u3055\u308c\u3066\u3044\u307e\u3059\u3002",
+        "\u58f0\u304b\u3051\u306b\u5fdc\u3058\u3089\u308c\u3066\u3044\u307e\u3059\u3002",
+        "\u8868\u60c5\u3084\u767a\u8a9e\u306b\u5927\u304d\u306a\u5909\u5316\u306f\u3042\u308a\u307e\u305b\u3093\u3002",
+        "\u898b\u5b88\u308a\u3092\u7d99\u7d9a\u3057\u3066\u3044\u307e\u3059\u3002",
     ]
     selected_note = note_text or quick_notes[0]
     note_preview = ft.Text(selected_note, size=FONT_SIZE_MD, color=COLOR_BLACK)
@@ -179,30 +222,35 @@ def create_support_progress_panel(
             on_save(e)
 
     category_buttons = ft.Row(
-        controls=[_toggle_button(label, active_category == label, lambda e, item=label: on_category_select(item), compact=True) for label in categories],
+        controls=[
+            _toggle_button(label, active_category == label, lambda e, item=label: on_category_select(item), compact=True)
+            for label in categories
+        ],
         spacing=SPACE_SM,
         wrap=True,
     )
     note_buttons = ft.Column(
         controls=[_toggle_button(text, selected_note == text, lambda e, item=text: choose_note(item), compact=True) for text in quick_notes],
         spacing=SPACE_SM,
+        tight=True,
     )
     meta_row = ft.Row(
         controls=[
-            _badge(active_category or "未選択", COLOR_TEAL_SOFT, COLOR_TEAL_DARK, ft.Icons.LABEL),
+            _badge(active_category or "\u672a\u9078\u629e", COLOR_TEAL_SOFT, COLOR_TEAL_DARK, ft.Icons.LABEL),
             _badge(recorded_at_text, COLOR_BLUE_SOFT, COLOR_BLUE, ft.Icons.SCHEDULE),
-            _badge(staff_name or "担当者未設定", COLOR_SLATE_SOFT, COLOR_GRAY_TEXT, ft.Icons.PERSON),
+            _badge(staff_name or "\u62c5\u5f53\u8005\u672a\u8a2d\u5b9a", COLOR_SLATE_SOFT, COLOR_GRAY_TEXT, ft.Icons.PERSON),
         ],
         spacing=SPACE_SM,
         wrap=True,
     )
+
     content: list[ft.Control] = [
-        ft.Text("区分", size=FONT_SIZE_XS, color=COLOR_GRAY_TEXT, weight=ft.FontWeight.W_700),
+        ft.Text("\u533a\u5206", size=FONT_SIZE_XS, color=COLOR_GRAY_TEXT, weight=ft.FontWeight.W_700),
         category_buttons,
-        _mobile_safe_time_input_row("記録時刻", record_time, on_record_time_change),
+        _mobile_safe_time_input_row("\u8a18\u9332\u6642\u523b", record_time, on_record_time_change),
         meta_row,
-        ft.Text("支援内容", size=FONT_SIZE_XS, color=COLOR_GRAY_TEXT, weight=ft.FontWeight.W_700),
-        ft.Container(content=note_preview, bgcolor=COLOR_GRAY_BG, border=ft.Border.all(1, COLOR_GRAY_BORDER), border_radius=14, padding=ft.Padding.all(SPACE_MD)),
+        ft.Text("\u652f\u63f4\u5185\u5bb9", size=FONT_SIZE_XS, color=COLOR_GRAY_TEXT, weight=ft.FontWeight.W_700),
+        _white_value_box(note_preview),
         note_buttons,
     ]
     if is_editing:
@@ -213,15 +261,26 @@ def create_support_progress_panel(
                 border=ft.Border.all(1, "#BFDBFE"),
                 border_radius=12,
                 padding=ft.Padding.symmetric(horizontal=SPACE_MD, vertical=SPACE_SM),
-                content=ft.Text("記録を編集中です。内容を選び直して更新してください。", size=FONT_SIZE_SM, color=COLOR_BLUE, weight=ft.FontWeight.W_700),
+                content=ft.Text(
+                    "\u8a18\u9332\u3092\u7de8\u96c6\u4e2d\u3067\u3059\u3002\u5185\u5bb9\u3092\u9078\u3073\u76f4\u3057\u3066\u66f4\u65b0\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
+                    size=FONT_SIZE_SM,
+                    color=COLOR_BLUE,
+                    weight=ft.FontWeight.W_700,
+                ),
             ),
         )
     if on_save is not None:
         actions: list[ft.Control] = []
         if is_editing and on_cancel is not None:
-            actions.append(ft.TextButton("キャンセル", on_click=on_cancel, style=ft.ButtonStyle(color=COLOR_GRAY_TEXT)))
-        actions.append(_panel_save_button("記録を更新" if is_editing else "記録を保存", save_selected_note))
+            actions.append(ft.TextButton("\u30ad\u30e3\u30f3\u30bb\u30eb", on_click=on_cancel, style=ft.ButtonStyle(color=COLOR_GRAY_TEXT)))
+        actions.append(_panel_save_button("\u8a18\u9332\u3092\u66f4\u65b0" if is_editing else "\u8a18\u9332\u3092\u4fdd\u5b58", save_selected_note))
         content.append(ft.Row(controls=actions, alignment=ft.MainAxisAlignment.END, spacing=SPACE_SM, wrap=True))
-    container = _build_input_panel_shell("支援経過入力", "スマホ版は定型文を選んで保存します", ft.Icons.EDIT_NOTE, content)
+
+    container = _mobile_panel_shell(
+        "\u652f\u63f4\u7d4c\u904e\u5165\u529b",
+        "\u30b9\u30de\u30db\u3067\u306f\u5b9a\u578b\u6587\u3092\u9078\u3093\u3067\u5b89\u5168\u306b\u4fdd\u5b58\u3057\u307e\u3059\u3002",
+        ft.Icons.EDIT_NOTE,
+        content,
+    )
     container.data = {"selected_category": active_category, "record_time": record_time, "is_editing": is_editing}
     return container
