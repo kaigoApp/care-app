@@ -164,20 +164,53 @@ def main(page: ft.Page) -> None:
         page.update()
 
     def show_message(message: str, bgcolor: str = APP_TIFFANY_DEEP) -> None:
-        page.snack_bar = ft.SnackBar(
+        token = datetime.now().timestamp()
+        state.refs["flash_message"] = message
+        state.refs["flash_token"] = token
+        render_screen()
+
+        def clear_flash() -> None:
+            if state.refs.get("flash_token") != token:
+                return
+            state.refs.pop("flash_message", None)
+            state.refs.pop("flash_token", None)
+            render_screen()
+
+        threading.Timer(2.2, clear_flash).start()
+
+    def build_flash_message() -> Optional[ft.Control]:
+        message = state.refs.get("flash_message")
+        if not message:
+            return None
+        return ft.Container(
+            bgcolor=APP_TIFFANY_DEEP,
+            border_radius=18,
+            padding=ft.Padding.symmetric(horizontal=16, vertical=14),
+            shadow=ft.BoxShadow(spread_radius=0, blur_radius=18, color="#0F172A22", offset=ft.Offset(0, 8)),
             content=ft.Row(
                 controls=[
-                    ft.Icon(ft.Icons.CHECK_CIRCLE, color=COLOR_WHITE, size=18),
-                    ft.Text(message, color=COLOR_WHITE, weight=ft.FontWeight.W_700),
+                    ft.Container(
+                        width=30,
+                        height=30,
+                        border_radius=15,
+                        bgcolor="#FFFFFF33",
+                        alignment=ft.Alignment(0, 0),
+                        content=ft.Icon(ft.Icons.CHECK_CIRCLE, color=COLOR_WHITE, size=17),
+                    ),
+                    ft.Column(
+                        controls=[
+                            ft.Text("\u4fdd\u5b58\u3057\u307e\u3057\u305f", color=COLOR_WHITE, weight=ft.FontWeight.W_900, size=FONT_SIZE_SM),
+                            ft.Text(str(message), color=COLOR_WHITE, size=FONT_SIZE_SM),
+                        ],
+                        spacing=2,
+                        tight=True,
+                    ),
                 ],
-                spacing=10,
+                spacing=12,
                 tight=True,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
             ),
-            bgcolor=bgcolor,
-            duration=1800,
         )
-        page.snack_bar.open = True
-        page.update()
 
     def build_banner(message: str, kind: str = "info") -> ft.Control:
         styles = {
@@ -272,6 +305,11 @@ def main(page: ft.Page) -> None:
         )
 
     def build_screen_shell(header: ft.Control, body_controls: List[ft.Control]) -> ft.Control:
+        controls = [build_centered_container(header)]
+        flash = build_flash_message()
+        if flash is not None:
+            controls.append(build_centered_container(flash))
+        controls.extend(build_centered_container(control) for control in body_controls)
         return ft.Container(
             expand=True,
             padding=ft.Padding.symmetric(horizontal=10, vertical=12),
@@ -281,7 +319,7 @@ def main(page: ft.Page) -> None:
                 colors=[APP_BG, APP_BG_ALT, "#F7FBFA"],
             ),
             content=ft.Column(
-                controls=[build_centered_container(header)] + [build_centered_container(control) for control in body_controls],
+                controls=controls,
                 spacing=SPACE_MD,
                 scroll=ft.ScrollMode.AUTO,
                 expand=True,
