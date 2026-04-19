@@ -40,6 +40,11 @@ from ui_parts import (
     create_vital_input_field,
     create_vital_panel,
 )
+from mobile_ui_parts import (
+    create_support_progress_panel,
+    create_vital_input_field,
+    create_vital_panel,
+)
 
 DEFAULT_SCENE = "朝"
 ABNORMAL_RULES = {
